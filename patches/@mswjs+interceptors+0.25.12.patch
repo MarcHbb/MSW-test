@@ -1,0 +1,126 @@
+diff --git a/node_modules/@mswjs/interceptors/lib/browser/chunk-5RW2GLTJ.js b/node_modules/@mswjs/interceptors/lib/browser/chunk-5RW2GLTJ.js
+index f9dbf7e..8d8dab6 100644
+--- a/node_modules/@mswjs/interceptors/lib/browser/chunk-5RW2GLTJ.js
++++ b/node_modules/@mswjs/interceptors/lib/browser/chunk-5RW2GLTJ.js
+@@ -56,7 +56,16 @@ var _FetchInterceptor = class extends _chunkG5ORGOKHjs.Interceptor {
+         }
+       });
+       this.logger.info("awaiting for the mocked response...");
+-      const signal = interactiveRequest.signal;
++      // Signal isn't always defined in react-native.
++      if (signal) {
++        signal.addEventListener(
++          "abort",
++          () => {
++            requestAborted.reject(signal.reason);
++          },
++          { once: true }
++        );
++      }
+       const requestAborted = new (0, _deferredpromise.DeferredPromise)();
+       signal.addEventListener(
+         "abort",
+@@ -105,8 +114,10 @@ var _FetchInterceptor = class extends _chunkG5ORGOKHjs.Interceptor {
+           request: interactiveRequest,
+           requestId
+         });
+-        const response = new Response(mockedResponse.body, mockedResponse);
+-        Object.defineProperty(response, "url", {
++// const response = new Response(mockedResponse.body, mockedResponse);
++        // response.body is undefined in react-native.
++        const response = mockedResponse.clone();      
++         Object.defineProperty(response, "url", {
+           writable: false,
+           enumerable: true,
+           configurable: false,
+diff --git a/node_modules/@mswjs/interceptors/lib/browser/chunk-KRADPSOF.mjs b/node_modules/@mswjs/interceptors/lib/browser/chunk-KRADPSOF.mjs
+index abbd476..b84fc84 100644
+--- a/node_modules/@mswjs/interceptors/lib/browser/chunk-KRADPSOF.mjs
++++ b/node_modules/@mswjs/interceptors/lib/browser/chunk-KRADPSOF.mjs
+@@ -56,8 +56,15 @@ var _FetchInterceptor = class extends Interceptor {
+         }
+       });
+       this.logger.info("awaiting for the mocked response...");
+-      const signal = interactiveRequest.signal;
+-      const requestAborted = new DeferredPromise();
++if (signal) {
++        signal.addEventListener(
++          "abort",
++          () => {
++            requestAborted.reject(signal.reason);
++          },
++          { once: true }
++        );
++      }      const requestAborted = new DeferredPromise();
+       signal.addEventListener(
+         "abort",
+         () => {
+@@ -105,8 +112,10 @@ var _FetchInterceptor = class extends Interceptor {
+           request: interactiveRequest,
+           requestId
+         });
+-        const response = new Response(mockedResponse.body, mockedResponse);
+-        Object.defineProperty(response, "url", {
++// const response = new Response(mockedResponse.body, mockedResponse);
++        // response.body is undefined in react-native.
++        const response = mockedResponse.clone();         
++         Object.defineProperty(response, "url", {
+           writable: false,
+           enumerable: true,
+           configurable: false,
+diff --git a/node_modules/@mswjs/interceptors/lib/browser/chunk-PYOA2PFX.mjs b/node_modules/@mswjs/interceptors/lib/browser/chunk-PYOA2PFX.mjs
+index ab3d22e..0553350 100644
+--- a/node_modules/@mswjs/interceptors/lib/browser/chunk-PYOA2PFX.mjs
++++ b/node_modules/@mswjs/interceptors/lib/browser/chunk-PYOA2PFX.mjs
+@@ -432,7 +432,14 @@ var XMLHttpRequestController = class {
+         total: totalResponseBodyLength
+       });
+     };
+-    if (response.body) {
++    if (response._body._bodyInit) {
++      this.logger.info('mocked response has _bodyInit, faking streaming...')
++
++      const bodyInit = response._body._bodyInit
++      const encoder = new TextEncoder()
++      this.responseBuffer = encoder.encode(bodyInit)
++      finalizeResponse()
++    } else if (response.body) {
+       this.logger.info("mocked response has body, streaming...");
+       const reader = response.body.getReader();
+       const readNextResponseBodyChunk = async () => {
+@@ -523,6 +530,7 @@ var XMLHttpRequestController = class {
+       return null;
+     }
+     const contentType = this.request.getResponseHeader("Content-Type") || "";
++    console.warn('HERE')
+     if (typeof DOMParser === "undefined") {
+       console.warn(
+         "Cannot retrieve XMLHttpRequest response body as XML: DOMParser is not defined. You are likely using an environment that is not browser or does not polyfill browser globals correctly."
+diff --git a/node_modules/@mswjs/interceptors/lib/browser/chunk-XIARBQ4Q.js b/node_modules/@mswjs/interceptors/lib/browser/chunk-XIARBQ4Q.js
+index 0c3c04c..c9cadb4 100644
+--- a/node_modules/@mswjs/interceptors/lib/browser/chunk-XIARBQ4Q.js
++++ b/node_modules/@mswjs/interceptors/lib/browser/chunk-XIARBQ4Q.js
+@@ -432,7 +432,14 @@ var XMLHttpRequestController = class {
+         total: totalResponseBodyLength
+       });
+     };
+-    if (response.body) {
++   if (response._body._bodyInit) {
++      this.logger.info('mocked response has _bodyInit, faking streaming...')
++
++      const bodyInit = response._body._bodyInit
++      const encoder = new TextEncoder()
++      this.responseBuffer = encoder.encode(bodyInit)
++      finalizeResponse()
++    } else if (response.body) {
+       this.logger.info("mocked response has body, streaming...");
+       const reader = response.body.getReader();
+       const readNextResponseBodyChunk = async () => {
+@@ -523,6 +530,7 @@ var XMLHttpRequestController = class {
+       return null;
+     }
+     const contentType = this.request.getResponseHeader("Content-Type") || "";
++    console.warn('HERE')
+     if (typeof DOMParser === "undefined") {
+       console.warn(
+         "Cannot retrieve XMLHttpRequest response body as XML: DOMParser is not defined. You are likely using an environment that is not browser or does not polyfill browser globals correctly."
